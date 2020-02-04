@@ -8,7 +8,7 @@ namespace DbgMON.DesktopManagement.Monitoring
     /// Monitors the desktop for changes to its background
     /// </summary>
     /// <seealso cref="System.Windows.Forms.NativeWindow" />
-    internal class DesktopMonitor : NativeWindow, IDisposable, IDesktopMonitor
+    public class DesktopMonitor : NativeWindow, IDisposable, IDesktopMonitor
     {
         /// <summary>
         /// prevents redundant dispose calls
@@ -18,7 +18,7 @@ namespace DbgMON.DesktopManagement.Monitoring
         /// <summary>
         /// The previous background
         /// </summary>
-        private string _previousBackground;
+        private string _previousBackground = "always lit";
 
         /// <summary>
         /// Occurs when [desktop background changed].
@@ -60,20 +60,6 @@ namespace DbgMON.DesktopManagement.Monitoring
             }
 
             _disposed = true;
-        }
-
-        /// <summary>
-        /// Called when [user preference changing].
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="UserPreferenceChangingEventArgs"/> instance containing the event data.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
-        private void OnUserPreferenceChanging(object sender, UserPreferenceChangingEventArgs e)
-        {
-            if (e.Category == UserPreferenceCategory.Desktop)
-            {
-                _previousBackground = GetDesktopBackgroundFilename();
-            }
         }
 
         /// <summary>

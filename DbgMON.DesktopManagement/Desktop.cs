@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DbgMON.DesktopManagement
@@ -26,6 +27,11 @@ namespace DbgMON.DesktopManagement
         private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, string pvParam, uint fwinIni);
 
         /// <summary>
+        /// The permanent set flags
+        /// </summary>
+        private const uint _permanentSetFlags = WindowsConstants.SendWinIniChange | WindowsConstants.UpdateIniFile;
+
+        /// <summary>
         /// The disposed
         /// </summary>
         private bool _disposed = false;
@@ -41,9 +47,19 @@ namespace DbgMON.DesktopManagement
         private MessagePumpsDaddy _randy;
 
         /// <summary>
+        /// The dave
+        /// </summary>
+        private IDesktopMonitor _dave;
+
+        /// <summary>
         /// The hooks
         /// </summary>
         private List<DesktopSecurityHook> _hooks = new List<DesktopSecurityHook>();
+
+        /// <summary>
+        /// The desktop set event
+        /// </summary>
+        private AutoResetEvent _desktopSet = new AutoResetEvent(false);
 
         /// <summary>
         /// Gets the instance.
@@ -53,12 +69,15 @@ namespace DbgMON.DesktopManagement
         /// <summary>
         /// Initializes this instance.
         /// </summary>
-        /// <returns>The Desktop singleton</returns>
-        public static Desktop Initialize()
+        /// <param name="monitor">The monitor.</param>
+        /// <returns>
+        /// The Desktop singleton
+        /// </returns>
+        public static Desktop Initialize(DesktopMonitor monitor = null)
         {
             if (Current == null)
             {
-                Current = new Desktop();
+                Current = monitor == null ? new Desktop() : new Desktop(monitor);
             }
 
             return Current;
@@ -77,25 +96,23 @@ namespace DbgMON.DesktopManagement
         /// Sets the desktop background.
         /// </summary>
         /// <param name="filename">The filename.</param>
-        public async Task<bool> SetDesktopBackground(string filename)
+        public Task<bool> SetDesktopBackground(string filename)
         {
             if (_isInternalSet)
             {
-                return false;
+                return Task.FromResult(false);
             }
 
             _isInternalSet = true;
-            //var flags = WindowsConstants.SendWinIniChange | WindowsConstants.UpdateIniFile;
-            var flags = 0u;
-            if (!SystemParametersInfo(WindowsConstants.SetDesktopBackgroundCommand, 0, filename, flags))
+
+            
+            if (!SystemParametersInfo(WindowsConstants.SetDesktopBackgroundCommand, 0, filename, _permanentSetFlags))
             {
                 _isInternalSet = false;
-                return false;
+                return Task.FromResult(false);
             }
-
-            await Task.Delay(200);
-            _isInternalSet = false;
-            return true;
+            
+            return Task.Run(_desktopSet.WaitOne);
         }
 
         /// <summary>
@@ -119,8 +136,20 @@ namespace DbgMON.DesktopManagement
 
             if (disposing)
             {
-                _randy.Dispose();
+                if (_randy?.Dave != null)
+                {
+                    _randy.Dave.DesktopBackgroundChanged -= OnDesktopBackgroundChanged;
+                }
+
+                _randy?.Dispose();
                 _randy = null;
+
+                if (_dave != null)
+                {
+                    _dave.DesktopBackgroundChanged -= OnDesktopBackgroundChanged;
+                    _dave?.Dispose();
+                    _dave = null;
+                }
             }
 
             _disposed = true;
@@ -128,7 +157,7 @@ namespace DbgMON.DesktopManagement
         }
 
         /// <summary>
-        /// Prevents a default instance of the <see cref="Desktop"/> class from being created.
+        /// Initializes a new instance of the <see cref="Desktop"/> class.
         /// </summary>
         private Desktop()
         {
@@ -141,20 +170,38 @@ namespace DbgMON.DesktopManagement
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Desktop"/> class.
+        /// </summary>
+        /// <param name="monitor">The monitor.</param>
+        private Desktop(DesktopMonitor monitor)
+        {
+            _dave = monitor;
+            _dave.DesktopBackgroundChanged += OnDesktopBackgroundChanged;
+        }
+
+        /// <summary>
         /// Called when [desktop background changed].
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="DesktopBackgroundChangedEventArgs"/> instance containing the event data.</param>
         private void OnDesktopBackgroundChanged(object sender, DesktopBackgroundChangedEventArgs e)
         {
-            var executableHooks = _hooks.Where(x => x.CanExecute(e));
-            Task.Run(async () =>
+            if (_isInternalSet)
             {
-                foreach (var hook in executableHooks)
+                _desktopSet.Set();
+                _isInternalSet = false;
+            }
+            else
+            {
+                var executableHooks = _hooks.Where(x => x.CanExecute(e));
+                Task.Run(async () =>
                 {
-                    await hook.Execute(e);
-                }
-            });
+                    foreach (var hook in executableHooks)
+                    {
+                        await hook.Execute(e);
+                    }
+                });
+            }
         }
     }
 }
