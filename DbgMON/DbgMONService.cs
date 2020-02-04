@@ -19,7 +19,7 @@ namespace DbgMON
         private static DesktopSecurityHook[] _hooks = new DesktopSecurityHook[]
         {
             new DesktopBackgroundAnimationHook(GetAnimationSlides()),
-            new DesktopRestoreHook()
+            new DesktopRestoreHook(DesktopRestoreHook.Background, 5000)
         };
 
         /// <summary>
