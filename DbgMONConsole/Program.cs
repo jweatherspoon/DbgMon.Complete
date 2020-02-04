@@ -3,7 +3,6 @@ using DbgMON.DesktopManagement.Hooks;
 using DbgMON.DesktopManagement.Hooks.Animation;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace DbgMONConsole
@@ -22,7 +21,7 @@ namespace DbgMONConsole
             Desktop.Initialize();
 
             var animationHook = new DesktopBackgroundAnimationHook(GetAnimationSlides());
-            var restoreHook = new DesktopRestoreHook();
+            var restoreHook = new DesktopRestoreHook(DesktopRestoreHook.Background, 5000);
             Desktop.Current.AddSecurityHook(animationHook);
             Desktop.Current.AddSecurityHook(restoreHook);
 
