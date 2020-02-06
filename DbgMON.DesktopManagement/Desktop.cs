@@ -12,6 +12,7 @@ namespace DbgMON.DesktopManagement
     /// <summary>
     /// Desktop singleton
     /// </summary>
+    /// <seealso cref="System.IDisposable" />
     public sealed class Desktop : IDisposable
     {
         /// <summary>
@@ -67,21 +68,58 @@ namespace DbgMON.DesktopManagement
         public static Desktop Current { get; private set; }
 
         /// <summary>
+        /// Gets or sets the factory.
+        /// </summary>
+        public static DesktopMonitorFactory Factory { get; set; } = new DesktopMonitorFactory();
+
+        /// <summary>
         /// Initializes this instance.
         /// </summary>
-        /// <param name="monitor">The monitor.</param>
+        /// <param name="monitorType">The monitor.</param>
         /// <returns>
         /// The Desktop singleton
         /// </returns>
-        public static Desktop Initialize(DesktopMonitor monitor = null)
+        public static Desktop Initialize(DesktopMonitorType monitorType = DesktopMonitorType.Default)
         {
             if (Current == null)
             {
-                Current = monitor == null ? new Desktop() : new Desktop(monitor);
+                if (monitorType != DesktopMonitorType.Default)
+                {
+                    var monitor = Factory.GetDesktopMonitor(monitorType);
+                    Current = new Desktop(monitor);
+                }
+                else
+                {
+                    Current = new Desktop();
+                }
             }
 
             return Current;
         }
+
+        /// <summary>
+        /// Initializes the specified testable.
+        /// </summary>
+        /// <param name="testable">if set to <c>true</c> [testable].</param>
+        /// <param name="monitorType">The monitor type.</param>
+        /// <returns>The current Desktop instance</returns>
+        public static Desktop Initialize(bool testable, DesktopMonitorType monitorType = DesktopMonitorType.Default)
+        {
+            var desktop = Initialize(monitorType);
+            desktop.Testable = testable;
+            return desktop;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="Desktop"/> is testable.
+        /// </summary>
+        public bool Testable { get; private set; }
+
+        /// <summary>
+        /// Gets the last duration of the call to SetDesktopBackground.
+        /// Only set if this instance was initialized as testable.
+        /// </summary>
+        public TimeSpan LastSetDesktopCallDuration { get; private set; }
 
         /// <summary>
         /// Adds the security hook.
@@ -105,13 +143,13 @@ namespace DbgMON.DesktopManagement
 
             _isInternalSet = true;
 
-            
+
             if (!SystemParametersInfo(WindowsConstants.SetDesktopBackgroundCommand, 0, filename, _permanentSetFlags))
             {
                 _isInternalSet = false;
                 return Task.FromResult(false);
             }
-            
+
             return Task.Run(_desktopSet.WaitOne);
         }
 
@@ -164,7 +202,7 @@ namespace DbgMON.DesktopManagement
             _randy = new MessagePumpsDaddy();
             Task.Run(async () =>
             {
-                await _randy.InitializeAsync(new DesktopMonitorFactory(true));
+                await _randy.InitializeAsync(Factory);
                 _randy.Dave.DesktopBackgroundChanged += OnDesktopBackgroundChanged;
             });
         }
@@ -173,7 +211,7 @@ namespace DbgMON.DesktopManagement
         /// Initializes a new instance of the <see cref="Desktop"/> class.
         /// </summary>
         /// <param name="monitor">The monitor.</param>
-        private Desktop(DesktopMonitor monitor)
+        private Desktop(IDesktopMonitor monitor)
         {
             _dave = monitor;
             _dave.DesktopBackgroundChanged += OnDesktopBackgroundChanged;

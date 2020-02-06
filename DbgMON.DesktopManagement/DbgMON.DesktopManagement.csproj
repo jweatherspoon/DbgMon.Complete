@@ -50,10 +50,12 @@
     <Compile Include="Desktop.cs" />
     <Compile Include="Monitoring\DesktopBackgroundChangedEventArgs.cs" />
     <Compile Include="Monitoring\DesktopMonitorFactory.cs" />
+    <Compile Include="Monitoring\DesktopMonitorType.cs" />
     <Compile Include="Monitoring\HiddenFormDesktopMonitor.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Monitoring\IDesktopMonitor.cs" />
+    <Compile Include="Monitoring\WndProcDesktopMonitor.cs" />
     <Compile Include="WindowsConstants.cs" />
     <Compile Include="Monitoring\DesktopMonitor.cs" />
     <Compile Include="Monitoring\MessagePumpsDaddy.cs" />

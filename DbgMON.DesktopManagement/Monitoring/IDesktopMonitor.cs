@@ -8,7 +8,7 @@ namespace DbgMON.DesktopManagement.Monitoring
     /// </summary>
     /// <seealso cref="System.IDisposable" />
     /// <seealso cref="System.Windows.Forms.IWin32Window" />
-    internal interface IDesktopMonitor : IDisposable, IWin32Window
+    public interface IDesktopMonitor : IDisposable, IWin32Window
     {
         event EventHandler<DesktopBackgroundChangedEventArgs> DesktopBackgroundChanged;
     }

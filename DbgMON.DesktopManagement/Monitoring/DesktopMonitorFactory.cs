@@ -6,33 +6,24 @@
     public class DesktopMonitorFactory
     {
         /// <summary>
-        /// The is form flag
-        /// </summary>
-        private bool _isForm;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DesktopMonitorFactory"/> class.
-        /// </summary>
-        /// <param name="isForm">if set to <c>true</c> [is form].</param>
-        public DesktopMonitorFactory(bool isForm)
-        {
-            _isForm = isForm;
-        }
-
-        /// <summary>
         /// Gets the desktop monitor.
         /// </summary>
         /// <returns>a desktop monitor</returns>
-        internal IDesktopMonitor GetDesktopMonitor()
+        public IDesktopMonitor GetDesktopMonitor(DesktopMonitorType monitorType)
         {
-            if (_isForm)
+            switch (monitorType)
             {
-                return new HiddenFormDesktopMonitor();
+                case DesktopMonitorType.Form:
+                    return new HiddenFormDesktopMonitor();
+
+                case DesktopMonitorType.NativeWindow:
+                    return new DesktopMonitor();
+
+                case DesktopMonitorType.WndProcNativeWindow:
+                    return new WndProcDesktopMonitor();
             }
-            else
-            {
-                return new DesktopMonitor();
-            }
+
+            return null;
         }
     }
 }

@@ -50,6 +50,9 @@ namespace DbgMON.DesktopManagement.Monitoring
             return Task.Run(() => _initialized.WaitOne());
         }
 
+        /// <summary>
+        /// kill dave
+        /// </summary>
         public void Filicide()
         {
             Dave?.Dispose();
@@ -71,7 +74,7 @@ namespace DbgMON.DesktopManagement.Monitoring
         /// </summary>
         private void MessagePumpLifeSupport()
         {
-            Dave = _monitorFactory.GetDesktopMonitor();
+            Dave = _monitorFactory.GetDesktopMonitor(DesktopMonitorType.WndProcNativeWindow);
             Application.ThreadException += (s, e) => Application.Exit();
 
             _initialized.Set();

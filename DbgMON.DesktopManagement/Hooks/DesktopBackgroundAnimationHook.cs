@@ -16,7 +16,7 @@ namespace DbgMON.DesktopManagement.Hooks
         /// <summary>
         /// The animation slides
         /// </summary>
-        private IEnumerable<AnimationSlide> _slides;
+        protected IEnumerable<AnimationSlide> _slides;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DesktopBackgroundAnimationHook"/> class.
